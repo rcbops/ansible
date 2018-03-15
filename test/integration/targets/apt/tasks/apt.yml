@@ -148,3 +148,50 @@
   assert:
     that:
         - "dpkg_force.changed"
+<<<<<<< HEAD
+=======
+
+# NEGATIVE: upgrade all packages while providing additional packages to install
+- name: provide additional packages to install while upgrading all installed packages
+  apt: pkg=*,test state=latest
+  ignore_errors: True
+  register: apt_result
+
+- name: verify failure of upgrade packages and install
+  assert:
+    that:
+        - "not apt_result.changed"
+        - "apt_result.failed"
+
+# https://github.com/ansible/ansible/issues/23155
+- name: create a repo file
+  copy:
+    dest: /etc/apt/sources.list.d/non-existing.list
+    content: deb http://ppa.launchpad.net/non-existing trusty main
+
+- name: test for sane error message
+  apt:
+    update_cache: yes
+  register: apt_result
+  ignore_errors: yes
+
+- name: verify sane error message
+  assert:
+    that:
+      - "'E:Failed to fetch' in apt_result['msg']"
+      - "'403' in apt_result['msg']"
+
+- name: Clean up
+  file:
+    name: /etc/apt/sources.list.d/non-existing.list
+    state: absent
+
+- name: autoclean during install
+  apt: pkg=hello state=present autoclean=yes
+
+- name: autoclean
+  apt: autoclean=yes
+
+- name: autoremove
+  apt: autoremove=yes
+>>>>>>> a6d31b6fb1... apt: better error msg when update_cache fails (#37410)
